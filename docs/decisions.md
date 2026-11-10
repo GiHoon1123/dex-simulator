@@ -46,3 +46,14 @@
 ## 6. 영속성
 
 - **결정:** 원본처럼 메모리 상태. DB는 이전이 끝난 다음 단계로 미룬다
+
+## 7. Spring Boot 버전 (1번 결정 수정)
+
+- **결정:** Spring Boot 4.1.2, Kotlin 2.3.21 (2026-11-10 Spring Initializr 기본 안정 버전)
+- **이유:** 처음엔 "3.x 최신"으로 정했지만, Initializr가 이제 4.x만 제공하고 3.x는 오픈소스 지원이 끝났다. 새 공개 저장소를 지원 종료 버전으로 시작하지 않는다
+- **영향:** Jackson 3(`tools.jackson`), 기능별로 나뉜 테스트 스타터(`spring-boot-starter-webmvc-test` 등)를 쓴다. springdoc 등 외부 라이브러리는 Boot 4 호환 버전을 고른다
+
+## 8. 저장소 이름과 원본 처리
+
+- **결정:** 지금은 `dex-simulator-kotlin`. 이전이 끝나고 검증되면 원본 `Dex-Simulator`를 `Dex-Simulator-NestJS`로 바꿔 보관(archive)하고, 이 저장소를 `dex-simulator`로 바꾼다. 두 README에 서로 링크한다
+- **이유:** GitHub 저장소 이름은 대소문자를 구분하지 않아 원본과 같은 이름을 바로 쓸 수 없다. 원본은 지우지 않는다. 이전 전후를 비교할 근거이고, 삭제는 되돌릴 수 없다
