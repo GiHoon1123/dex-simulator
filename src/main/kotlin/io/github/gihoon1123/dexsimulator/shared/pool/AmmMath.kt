@@ -19,6 +19,7 @@ object Tokens {
             "WETH" to 18,
             "DAI" to 18,
             "USDC" to 6,
+            "USDT" to 6,
             "BTC" to 8,
         )
 
