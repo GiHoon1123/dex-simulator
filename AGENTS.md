@@ -1,8 +1,8 @@
-# dex-simulator-kotlin 작업 지침
+# dex-simulator 작업 지침
 
 > 이 파일이 모든 에이전트(Codex, Claude Code 등)의 공통 지침이다. `CLAUDE.md`는 이 파일을 불러오기만 한다. 지침은 여기서만 고친다.
 
-원본 [GiHoon1123/Dex-Simulator](https://github.com/GiHoon1123/Dex-Simulator)(NestJS, TypeScript)를 Kotlin과 Spring Boot로 다시 만드는 저장소다.
+원본 `GiHoon1123/Dex-Simulator-nestjs`(NestJS, TypeScript, 비공개)를 Kotlin과 Spring Boot로 다시 만드는 저장소다. 저장소는 `GiHoon1123/dex-simulator`(2026-11-11 `dex-simulator-kotlin`에서 이름 변경). 로컬 폴더 이름은 그대로 `~/Desktop/common/dex-simulator-kotlin`이다.
 목적은 두 가지다. Kotlin·Spring 실력을 보여 주는 공개 근거, 그리고 옮기면서 **금액 정확성과 동시성 설계**를 개선한 기록.
 
 원본 로컬 경로: `~/Desktop/common/Dex-Simulator` (읽기 전용, 수정하지 않는다)
@@ -67,7 +67,7 @@
 2. 그다음 mev-simulation(`blockchain-prerequisites.guard`와 MEV 봇 자동 시작 포함), contract-simulation 순서
 
 **이전이 모두 끝나면**
-- 로컬 실행으로 전체 확인 → 이력서(`~/Desktop/작업중.md`)의 Dex-Simulator 링크 교체는 사용자에게 알린다 → 원본 `GiHoon1123/Dex-Simulator`를 비공개로 전환(docs/decisions.md 8번). 다른 원본 저장소는 건드리지 않는다
+- 로컬 실행으로 전체 확인하고 README의 진행 상황을 마무리한다. 저장소 이름 변경과 원본 비공개 전환은 이미 끝났다(docs/decisions.md 8번)
 
 **남은 결정**
 - 원본 예외 처리는 서버 내부 오류도 400으로 돌려준다. 지금은 원본 동작을 그대로 옮겼다. 바꿀지 검토가 필요하다
