@@ -26,6 +26,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    // Required by Spring MVC to run `suspend` controller functions.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
 
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
