@@ -48,7 +48,7 @@
 > 작업을 이어받는 에이전트는 여기부터 읽는다. 단계가 끝날 때마다 이 칸을 갱신한다.
 
 **2026-11-11 기준**
-- `main`: 공통 뼈대(PR #1), shared/pool(PR #2), shared/blockchain(PR #3), 저장소 이름 변경(PR #4), dex-simulation(PR #5)
+- `main`: 공통 뼈대(PR #1), shared/pool(PR #2), shared/blockchain(PR #3), 저장소 이름 변경(PR #4), dex-simulation(PR #5), mev-simulation(PR #6)
 - 공통 구조
   - `common/sim/SimulationContext`: 시뮬레이션 상태를 바꾸는 단일 스레드. 서비스의 공개 함수는 모두 `suspend`이고 `sim.run { }` 안에서 상태를 읽고 쓴다. 주기 작업은 `sim.scope`에서 돈다
   - `common/event/EventBus`: SharedFlow 이벤트 버스. 구독은 `subscribe<T>(scope, onSubscribed) { }`
@@ -59,14 +59,15 @@
 - shared/pool: `AmmMath`(순수 함수), `PoolService`, `PoolOracleService`, `PoolController`
 - shared/blockchain: `TransactionPoolService`(대기열), `BlockService`(블록 생성·실행·자동 생성), `GasService`, `TransactionGeneratorService`, `TransactionConverterService`(풀 스왑 → 대기열), `SwapAbi`, `SimulationAutoStart`
 - dex-simulation(`dex/`): `MarketService`, `LpService`, `TraderService`, 컨트롤러는 `DexControllers.kt`, 모델·이벤트는 `DexModels.kt`
+- mev-simulation(`mev/`): `MevDetectorService`(대기열 스캔), `MevStrategyService`, `MevBotService`, `MevController`와 전제 조건 검사 `BlockchainPrerequisites`. 자동 시작에 MEV 봇 포함
 - 이벤트: `shared/events/PoolEvents.kt`, `BlockchainEvents.kt`, `dex/DexModels.kt`
 - **원칙:** 상태를 바꾸는 반응은 직접 호출(같은 시뮬레이션 단계), 알림만 필요한 것은 이벤트(decisions 11번)
-- 테스트 96개(ktlint 포함 `./gradlew build` 통과). jar를 띄워 자동 블록 생성, 풀 스왑 → 대기열 → 블록, LP 초기화 → 거래 → 가격 변동 → 아비트라지 흐름을 확인했다. 테스트 지원에 `ScriptedRandom`(원본의 `Math.random` 모킹 대체)이 있다
-- 원본에서 고친 문제는 docs/decisions.md 9번(pool), 10번(blockchain), 11번(dex). suspend 핸들러 오류 형식은 12번
+- 테스트 106개(ktlint 포함 `./gradlew build` 통과). jar를 띄워 자동 블록 생성, 풀 스왑 → 대기열 → 블록, LP 초기화 → 거래 → 가격 변동 → 아비트라지 흐름, 자동 시작 상태에서 MEV 봇 공격을 확인했다. 테스트 지원에 `ScriptedRandom`(원본의 `Math.random` 모킹 대체)이 있다
+- 원본에서 고친 문제는 docs/decisions.md 9번(pool), 10번(blockchain), 11번(dex), 13번(mev). suspend 핸들러 오류 형식은 12번
 
 **다음 할 일**
-1. `mev-simulation` 이전: 원본 `src/mev-simulation`. `common/guards/blockchain-prerequisites.guard.ts`(블록 자동 생성과 거래 생성기가 켜져 있어야 MEV API 허용)와 MEV 봇 자동 시작(`SimulationAutoStart`에 추가)을 함께 옮긴다. MEV 탐지는 `TransactionPoolService.getPendingTransactions()`를 쓴다
-2. 그다음 contract-simulation
+1. `contract-simulation` 이전(마지막 모듈): 원본 `src/contract-simulation`(router, singleton 컨트랙트 시뮬레이션, 컨트롤러 1개)
+2. 끝나면 README 진행 상황과 실행 안내를 마무리하고, 전체를 로컬에서 다시 확인한다
 
 **이전이 모두 끝나면**
 - 로컬 실행으로 전체 확인하고 README의 진행 상황을 마무리한다. 저장소 이름 변경과 원본 비공개 전환은 이미 끝났다(docs/decisions.md 8번)
