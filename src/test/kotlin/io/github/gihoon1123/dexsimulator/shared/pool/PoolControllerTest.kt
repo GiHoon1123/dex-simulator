@@ -98,4 +98,16 @@ class PoolControllerTest(
             .andExpect(jsonPath("$.oracle.isActive").value(true))
             .andExpect(jsonPath("$.oracle.systemStatus").value("healthy"))
     }
+
+    @Test
+    fun `errors from suspend handlers are json without an accept header`() {
+        val body =
+            """{"address":"$ETH_USDC","pair":"ETH/USDC","tokenA":"ETH","tokenB":"USDC",""" +
+                """"initialReserveA":1,"initialReserveB":1,"feeRate":0.003}"""
+
+        call(json("/pool/create", body))
+            .andExpect(status().isConflict)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message").value("이미 존재하는 풀입니다"))
+    }
 }

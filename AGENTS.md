@@ -2,10 +2,10 @@
 
 > 이 파일이 모든 에이전트(Codex, Claude Code 등)의 공통 지침이다. `CLAUDE.md`는 이 파일을 불러오기만 한다. 지침은 여기서만 고친다.
 
-원본 `GiHoon1123/Dex-Simulator-nestjs`(NestJS, TypeScript, 비공개)를 Kotlin과 Spring Boot로 다시 만드는 저장소다. 저장소는 `GiHoon1123/dex-simulator`(2026-11-11 `dex-simulator-kotlin`에서 이름 변경). 로컬 폴더 이름은 그대로 `~/Desktop/common/dex-simulator-kotlin`이다.
+원본 `GiHoon1123/Dex-Simulator-nestjs`(NestJS, TypeScript, 비공개)를 Kotlin과 Spring Boot로 다시 만드는 저장소다. 저장소는 `GiHoon1123/dex-simulator`(2026-11-11 `dex-simulator-kotlin`에서 이름 변경), 로컬 경로는 `~/Desktop/common/dex-simulator`.
 목적은 두 가지다. Kotlin·Spring 실력을 보여 주는 공개 근거, 그리고 옮기면서 **금액 정확성과 동시성 설계**를 개선한 기록.
 
-원본 로컬 경로: `~/Desktop/common/Dex-Simulator` (읽기 전용, 수정하지 않는다)
+원본 로컬 경로: `~/Desktop/common/Dex-Simulator-nestjs` (읽기 전용, 수정하지 않는다)
 
 ## 설계 결정 (요약, 이유는 docs/decisions.md)
 
@@ -48,7 +48,7 @@
 > 작업을 이어받는 에이전트는 여기부터 읽는다. 단계가 끝날 때마다 이 칸을 갱신한다.
 
 **2026-11-11 기준**
-- `main`: 공통 뼈대(PR #1), shared/pool(PR #2), shared/blockchain(PR #3)
+- `main`: 공통 뼈대(PR #1), shared/pool(PR #2), shared/blockchain(PR #3), 저장소 이름 변경(PR #4), dex-simulation(PR #5)
 - 공통 구조
   - `common/sim/SimulationContext`: 시뮬레이션 상태를 바꾸는 단일 스레드. 서비스의 공개 함수는 모두 `suspend`이고 `sim.run { }` 안에서 상태를 읽고 쓴다. 주기 작업은 `sim.scope`에서 돈다
   - `common/event/EventBus`: SharedFlow 이벤트 버스. 구독은 `subscribe<T>(scope, onSubscribed) { }`
@@ -58,13 +58,15 @@
   - 테스트 지원: `src/test/.../support`(`MutableClock`, `EventRecorder`). HTTP 테스트는 `@SpringBootTest` + MockMvc + `asyncDispatch`, 자동 시작은 `src/test/resources/application.properties`로 끈다
 - shared/pool: `AmmMath`(순수 함수), `PoolService`, `PoolOracleService`, `PoolController`
 - shared/blockchain: `TransactionPoolService`(대기열), `BlockService`(블록 생성·실행·자동 생성), `GasService`, `TransactionGeneratorService`, `TransactionConverterService`(풀 스왑 → 대기열), `SwapAbi`, `SimulationAutoStart`
-- 이벤트: `shared/events/PoolEvents.kt`, `BlockchainEvents.kt`
-- 테스트 65개(ktlint 포함 `./gradlew build` 통과). jar를 띄워 자동 블록 생성, 풀 스왑 → 대기열 → 블록 흐름을 확인했다
-- 원본에서 고친 문제는 docs/decisions.md 9번(pool), 10번(blockchain)
+- dex-simulation(`dex/`): `MarketService`, `LpService`, `TraderService`, 컨트롤러는 `DexControllers.kt`, 모델·이벤트는 `DexModels.kt`
+- 이벤트: `shared/events/PoolEvents.kt`, `BlockchainEvents.kt`, `dex/DexModels.kt`
+- **원칙:** 상태를 바꾸는 반응은 직접 호출(같은 시뮬레이션 단계), 알림만 필요한 것은 이벤트(decisions 11번)
+- 테스트 96개(ktlint 포함 `./gradlew build` 통과). jar를 띄워 자동 블록 생성, 풀 스왑 → 대기열 → 블록, LP 초기화 → 거래 → 가격 변동 → 아비트라지 흐름을 확인했다. 테스트 지원에 `ScriptedRandom`(원본의 `Math.random` 모킹 대체)이 있다
+- 원본에서 고친 문제는 docs/decisions.md 9번(pool), 10번(blockchain), 11번(dex). suspend 핸들러 오류 형식은 12번
 
 **다음 할 일**
-1. `dex-simulation` 이전: 원본 `src/dex-simulation`(market, lp, trader). 원본 테스트(16개 spec 파일)를 먼저 Kotlin으로 옮긴다. 원본 리스너는 `trade.executed`, `market.price.changed`, `arbitrage.opportunity`를 쓴다
-2. 그다음 mev-simulation(`blockchain-prerequisites.guard`와 MEV 봇 자동 시작 포함), contract-simulation 순서
+1. `mev-simulation` 이전: 원본 `src/mev-simulation`. `common/guards/blockchain-prerequisites.guard.ts`(블록 자동 생성과 거래 생성기가 켜져 있어야 MEV API 허용)와 MEV 봇 자동 시작(`SimulationAutoStart`에 추가)을 함께 옮긴다. MEV 탐지는 `TransactionPoolService.getPendingTransactions()`를 쓴다
+2. 그다음 contract-simulation
 
 **이전이 모두 끝나면**
 - 로컬 실행으로 전체 확인하고 README의 진행 상황을 마무리한다. 저장소 이름 변경과 원본 비공개 전환은 이미 끝났다(docs/decisions.md 8번)
