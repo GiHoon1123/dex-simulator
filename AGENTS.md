@@ -2,10 +2,10 @@
 
 > 이 파일이 모든 에이전트(Codex, Claude Code 등)의 공통 지침이다. `CLAUDE.md`는 이 파일을 불러오기만 한다. 지침은 여기서만 고친다.
 
-원본 `GiHoon1123/Dex-Simulator-nestjs`(NestJS, TypeScript, 비공개)를 Kotlin과 Spring Boot로 다시 만드는 저장소다. 저장소는 `GiHoon1123/dex-simulator`(2026-11-11 `dex-simulator-kotlin`에서 이름 변경). 로컬 폴더 이름은 그대로 `~/Desktop/common/dex-simulator-kotlin`이다.
+원본 `GiHoon1123/Dex-Simulator-nestjs`(NestJS, TypeScript, 비공개)를 Kotlin과 Spring Boot로 다시 만드는 저장소다. 저장소는 `GiHoon1123/dex-simulator`(2026-11-11 `dex-simulator-kotlin`에서 이름 변경), 로컬 경로는 `~/Desktop/common/dex-simulator`.
 목적은 두 가지다. Kotlin·Spring 실력을 보여 주는 공개 근거, 그리고 옮기면서 **금액 정확성과 동시성 설계**를 개선한 기록.
 
-원본 로컬 경로: `~/Desktop/common/Dex-Simulator` (읽기 전용, 수정하지 않는다)
+원본 로컬 경로: `~/Desktop/common/Dex-Simulator-nestjs` (읽기 전용, 수정하지 않는다)
 
 ## 설계 결정 (요약, 이유는 docs/decisions.md)
 
