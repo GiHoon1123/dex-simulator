@@ -1,7 +1,7 @@
-# dex-simulator (Kotlin)
+# dex-simulator
 
 탈중앙 거래소(DEX)의 유동성 풀 가격 결정, 거래 대기열과 블록 생성, 거래 순서를 노린 공격(MEV)을 재현하는 시뮬레이터.
-NestJS로 만든 원본 [Dex-Simulator](https://github.com/GiHoon1123/Dex-Simulator)를 Kotlin과 Spring Boot로 다시 만들고 있다.
+처음 NestJS로 만든 것을 Kotlin과 Spring Boot로 다시 만들고 있다. 원본 NestJS 저장소(`Dex-Simulator-nestjs`)는 비공개로 보관한다.
 
 ## 원본과 달라지는 점
 
