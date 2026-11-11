@@ -3,6 +3,7 @@ package io.github.gihoon1123.dexsimulator.common.error
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.BindException
 import org.springframework.web.ErrorResponse
@@ -47,7 +48,9 @@ class GlobalExceptionHandler(
                 method = request.method,
                 message = message,
             )
-        return ResponseEntity.status(status).body(body)
+        // Explicit: for `suspend` handlers without an Accept header the negotiated type is not JSON
+        // and the error would fall back to the servlet container's HTML page.
+        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body)
     }
 
     internal fun resolve(exception: Throwable): Pair<HttpStatusCode, String> =
