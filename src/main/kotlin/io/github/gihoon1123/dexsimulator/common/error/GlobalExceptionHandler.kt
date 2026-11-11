@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.BindException
 import org.springframework.web.ErrorResponse
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -52,6 +53,8 @@ class GlobalExceptionHandler(
     internal fun resolve(exception: Throwable): Pair<HttpStatusCode, String> =
         when (exception) {
             is ApiException -> exception.status to exception.message
+            // Field errors of @Valid bodies and query objects, e.g. "amountIn: must be ...".
+            is BindException -> HttpStatus.BAD_REQUEST to exception.fieldErrors.joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
             is ErrorResponse -> exception.statusCode to (exception.body.detail ?: exception.message ?: "")
             is Exception -> HttpStatus.BAD_REQUEST to (exception.message ?: "")
             else -> HttpStatus.INTERNAL_SERVER_ERROR to INTERNAL_ERROR_MESSAGE
