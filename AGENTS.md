@@ -48,19 +48,26 @@
 > 작업을 이어받는 에이전트는 여기부터 읽는다. 단계가 끝날 때마다 이 칸을 갱신한다.
 
 **2026-11-11 기준**
-- `main`: 공통 뼈대(PR #1), shared/pool(PR #2)
+- `main`: 공통 뼈대(PR #1), shared/pool(PR #2), shared/blockchain(PR #3)
 - 공통 구조
   - `common/sim/SimulationContext`: 시뮬레이션 상태를 바꾸는 단일 스레드. 서비스의 공개 함수는 모두 `suspend`이고 `sim.run { }` 안에서 상태를 읽고 쓴다. 주기 작업은 `sim.scope`에서 돈다
   - `common/event/EventBus`: SharedFlow 이벤트 버스. 구독은 `subscribe<T>(scope, onSubscribed) { }`
   - `common/json/AmountJson`: BigDecimal을 끝의 0 없는 숫자로 직렬화
-  - 컨트롤러는 `suspend` 함수, POST는 `@ResponseStatus(CREATED)`(NestJS 기본 201), 없으면 null(200 빈 본문)
-- shared/pool: `AmmMath`(순수 함수), `PoolService`, `PoolOracleService`, `PoolController`, 이벤트는 `shared/events/PoolEvents.kt`
-- 테스트 47개(ktlint 포함 `./gradlew build` 통과). jar를 띄워 주요 엔드포인트를 curl로 확인했다
-- 원본에서 고친 문제는 docs/decisions.md 9번
+  - `common/config`: `Clock`, `Random` 빈. 시간과 난수는 반드시 주입받는다(테스트는 `MutableClock`, 시드 고정 Random)
+  - 컨트롤러는 `suspend` 함수, POST는 `@ResponseStatus(CREATED)`(NestJS 기본 201)
+  - 테스트 지원: `src/test/.../support`(`MutableClock`, `EventRecorder`). HTTP 테스트는 `@SpringBootTest` + MockMvc + `asyncDispatch`, 자동 시작은 `src/test/resources/application.properties`로 끈다
+- shared/pool: `AmmMath`(순수 함수), `PoolService`, `PoolOracleService`, `PoolController`
+- shared/blockchain: `TransactionPoolService`(대기열), `BlockService`(블록 생성·실행·자동 생성), `GasService`, `TransactionGeneratorService`, `TransactionConverterService`(풀 스왑 → 대기열), `SwapAbi`, `SimulationAutoStart`
+- 이벤트: `shared/events/PoolEvents.kt`, `BlockchainEvents.kt`
+- 테스트 65개(ktlint 포함 `./gradlew build` 통과). jar를 띄워 자동 블록 생성, 풀 스왑 → 대기열 → 블록 흐름을 확인했다
+- 원본에서 고친 문제는 docs/decisions.md 9번(pool), 10번(blockchain)
 
 **다음 할 일**
-1. `shared/blockchain` 이전: 원본 `src/shared/blockchain`(거래 대기열, 가스, 블록 생성, 거래 생성기·파서·변환기)과 `src/common/guards/blockchain-prerequisites.guard.ts`. 변환기는 `PoolTransactionCreatedEvent`를 구독한다
-2. 그다음 `shared/events`(블록체인 이벤트), dex-simulation, mev-simulation, contract-simulation 순서
+1. `dex-simulation` 이전: 원본 `src/dex-simulation`(market, lp, trader). 원본 테스트(16개 spec 파일)를 먼저 Kotlin으로 옮긴다. 원본 리스너는 `trade.executed`, `market.price.changed`, `arbitrage.opportunity`를 쓴다
+2. 그다음 mev-simulation(`blockchain-prerequisites.guard`와 MEV 봇 자동 시작 포함), contract-simulation 순서
+
+**이전이 모두 끝나면**
+- 로컬 실행으로 전체 확인 → 이력서(`~/Desktop/작업중.md`)의 Dex-Simulator 링크 교체는 사용자에게 알린다 → 원본 `GiHoon1123/Dex-Simulator`를 비공개로 전환(docs/decisions.md 8번). 다른 원본 저장소는 건드리지 않는다
 
 **남은 결정**
 - 원본 예외 처리는 서버 내부 오류도 400으로 돌려준다. 지금은 원본 동작을 그대로 옮겼다. 바꿀지 검토가 필요하다

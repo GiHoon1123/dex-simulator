@@ -117,7 +117,7 @@ class PoolServiceTest {
             val transaction = recorder.ofType<PoolTransactionCreatedEvent>().single().transaction
             assertEquals(result.swapId, transaction.id)
             assertTrue(transaction.swapParams.zeroForOne)
-            assertEquals("1", transaction.swapParams.amountSpecified)
+            assertEquals("1000000000000000000", transaction.swapParams.amountSpecified)
             assertEquals(result, recorder.ofType<SwapExecutedEvent>().single().swapResult)
             val updated = recorder.ofType<PoolUpdatedEvent>().single()
             assertEquals(PoolUpdateReason.SWAP, updated.reason)

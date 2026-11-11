@@ -307,7 +307,8 @@ class PoolService(
                     SwapCallParams(
                         recipient = params.recipient,
                         zeroForOne = params.tokenIn == pool.tokenA,
-                        amountSpecified = result.amountIn.stripTrailingZeros().toPlainString(),
+                        // Minimal units, as Uniswap's int256 amountSpecified. The original passed "1.5".
+                        amountSpecified = result.amountIn.unscaledValue().toString(),
                         sqrtPriceLimitX96 = "0",
                         data = "0x",
                     ),
