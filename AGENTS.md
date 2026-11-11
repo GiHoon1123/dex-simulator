@@ -15,9 +15,9 @@
 - 테스트: JUnit 5 + MockK. 품질: ktlint, GitHub Actions(빌드, 테스트)
 - API 문서: springdoc-openapi
 - **API 계약:** 원본과 같은 엔드포인트와 JSON 모양을 유지한다. 원본 설계가 명백히 잘못된 곳만 바꾸고 docs/decisions.md에 기록한다
-- **금액:** 토큰 수량과 준비금은 최소 단위 정수(BigInteger). 가격 비율 같은 표시용 값만 BigDecimal. 원본은 전부 JS number(부동소수점)라 결과가 달라지는 곳은 문서와 테스트에 명시한다
+- **금액:** 토큰 수량과 준비금은 토큰 소수 자릿수에 맞춘 BigDecimal(최소 단위에서 내림). 가격, %, USD 추정 같은 표시용 값은 Double. 원본은 전부 JS number(부동소수점)라 결과가 달라지는 곳은 문서와 테스트에 명시한다
 - **동시성:** 시뮬레이션 상태(풀, 거래 대기열, 체인)는 단일 작성자. 상태를 바꾸는 것은 병렬도 1인 코루틴 하나뿐이고, 다른 쪽은 메시지로 요청한다. 락으로 여기저기 보호하지 않는다
-- **이벤트:** 원본의 EventEmitter 이벤트(trade.executed, block.executed, mev.* 등)는 이름과 의미를 유지하되 Spring 방식으로 옮긴다. 방식은 docs/decisions.md에서 정한다
+- **이벤트:** 원본의 EventEmitter 이벤트(trade.executed, block.executed, mev.* 등)는 이름과 의미를 유지하고, 코루틴 SharedFlow 기반 `EventBus`로 옮긴다(비동기, 발행 순서 유지)
 - **영속성:** 원본처럼 메모리 상태. DB는 추가하지 않는다
 
 ## 작업 규칙
@@ -47,25 +47,21 @@
 
 > 작업을 이어받는 에이전트는 여기부터 읽는다. 단계가 끝날 때마다 이 칸을 갱신한다.
 
-**2026-11-10 기준**
-- `main`: 지침 문서 커밋 1개(`docs: add migration guidelines and decision log`), GitHub `GiHoon1123/dex-simulator-kotlin`(공개)에 push 완료
-- 작업 브랜치: `chore/bootstrap` (아직 커밋 없음)
-- `chore/bootstrap`에 만든 파일
-  - Gradle: `build.gradle.kts`(Kotlin 2.3.21, Spring Boot 4.1.2, springdoc 3.2.0, MockK 1.14.12, ktlint 플러그인 14.2.0), `settings.gradle.kts`, Gradle 래퍼(9.8.2)
-  - `src/main`: `DexSimulatorApplication.kt`, `application.yml`(포트 3000, Swagger UI `/api`), `common/error/ApiException.kt`, `common/error/GlobalExceptionHandler.kt`(원본 `HttpExceptionFilter` 이전), `common/config/ClockConfig.kt`
-  - `src/test`: `GlobalExceptionHandlerTest.kt`(원본 테스트 8개를 옮김), `DexSimulatorApplicationTests.kt`
-  - `.github/workflows/ci.yml`, `README.md`
-- `./gradlew build` 통과(ktlint, 테스트 8개). 원본 예외 필터 테스트 8개 중 `null`, `undefined` 예외 2개는 JVM에 없어 "Exception이 아닌 Throwable" 1개로 합쳤고, 쿼리 문자열이 path에 남는지 확인하는 테스트 1개를 추가했다
-- `bootRun` 확인: `/api`(Swagger UI)와 `/api-docs` 200, 없는 경로는 원본과 같은 형식의 404 JSON(메시지는 Spring 기본 문구라 원본 "Cannot GET /nope"와 다름)
+**2026-11-11 기준**
+- `main`: 공통 뼈대(PR #1), shared/pool(PR #2)
+- 공통 구조
+  - `common/sim/SimulationContext`: 시뮬레이션 상태를 바꾸는 단일 스레드. 서비스의 공개 함수는 모두 `suspend`이고 `sim.run { }` 안에서 상태를 읽고 쓴다. 주기 작업은 `sim.scope`에서 돈다
+  - `common/event/EventBus`: SharedFlow 이벤트 버스. 구독은 `subscribe<T>(scope, onSubscribed) { }`
+  - `common/json/AmountJson`: BigDecimal을 끝의 0 없는 숫자로 직렬화
+  - 컨트롤러는 `suspend` 함수, POST는 `@ResponseStatus(CREATED)`(NestJS 기본 201), 없으면 null(200 빈 본문)
+- shared/pool: `AmmMath`(순수 함수), `PoolService`, `PoolOracleService`, `PoolController`, 이벤트는 `shared/events/PoolEvents.kt`
+- 테스트 47개(ktlint 포함 `./gradlew build` 통과). jar를 띄워 주요 엔드포인트를 curl로 확인했다
+- 원본에서 고친 문제는 docs/decisions.md 9번
 
 **다음 할 일**
-1. (완료) `./gradlew build` 통과
-2. (완료) `.DS_Store`를 `.gitignore`에 추가했다. 지침 파일은 `AGENTS.md`로 옮겼고 `CLAUDE.md`는 `@AGENTS.md`만 담는다(아직 커밋 전)
-3. 커밋하고 `chore/bootstrap`을 push, PR을 열어 CI 통과 확인 후 main에 합친다
-4. 그다음 모듈: `shared/pool`(AMM). 원본 `src/shared/pool`을 읽고, 금액을 최소 단위 정수로 바꾸는 규칙을 docs/decisions.md 3번에 구체적으로 적은 뒤 시작한다
+1. `shared/blockchain` 이전: 원본 `src/shared/blockchain`(거래 대기열, 가스, 블록 생성, 거래 생성기·파서·변환기)과 `src/common/guards/blockchain-prerequisites.guard.ts`. 변환기는 `PoolTransactionCreatedEvent`를 구독한다
+2. 그다음 `shared/events`(블록체인 이벤트), dex-simulation, mev-simulation, contract-simulation 순서
 
 **남은 결정**
-- docs/decisions.md 5번: 이벤트 전달 방식(Spring ApplicationEventPublisher 또는 코루틴 SharedFlow). shared/events 이전 때 정한다
 - 원본 예외 처리는 서버 내부 오류도 400으로 돌려준다. 지금은 원본 동작을 그대로 옮겼다. 바꿀지 검토가 필요하다
-- 원본 `src/common/guards/blockchain-prerequisites.guard.ts`는 shared/blockchain 이전 때 함께 옮긴다
 - 원본은 개발 환경에서 블록 생성, 거래 생성기, MEV 봇을 자동 시작한다(`main.ts`). 각 모듈 이전 때 같은 동작을 넣는다
