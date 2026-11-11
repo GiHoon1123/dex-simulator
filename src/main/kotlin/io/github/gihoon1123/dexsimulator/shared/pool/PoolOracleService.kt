@@ -219,7 +219,7 @@ class PoolOracleService(
                     autoExecutable = opportunity.isExecutable && config.autoExecute,
                 ),
             )
-            log.info("MEV 기회 탐지: {} - {}% 편차", poolAddress, "%.2f".format(deviation.relativeDifference))
+            log.info("MEV 기회 탐지: {} - {}% 편차", poolAddress, String.format(java.util.Locale.ROOT, "%.2f", deviation.relativeDifference))
         }
     }
 
