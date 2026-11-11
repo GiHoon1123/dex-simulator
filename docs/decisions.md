@@ -19,6 +19,7 @@
 ## 1. 기술 스택
 
 - **결정:** Kotlin 최신 안정, JDK 21, Spring Boot 3.x 최신, Spring MVC, 코루틴, JUnit 5 + MockK, ktlint, springdoc-openapi, GitHub Actions
+- **변경 (2026-11-11):** MockK는 쓰지 않아 뺐다. 테스트는 목 대신 실제 단일 작성자 스레드와 주입한 `Clock`·`Random`으로 돈다. Spring Boot 버전은 7번
 - **이유:** 국내 Kotlin·Spring 공고에서 가장 흔한 조합이다. 주기 작업이 많아서 코루틴이 Kotlin다운 방식이다. WebFlux는 이 프로젝트에 이점이 없다
 
 ## 2. API 계약
